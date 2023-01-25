@@ -10,8 +10,7 @@
 			Any application creates a large quantity of data; some of it serves just as a warning, while others are essential to the application's operation and users, and some of it, if interfered with, can allow the application and its content to be hacked.
 		</Description>
 		<PackageTags>Secure storage,encryption, security, encrypted data, secure applications</PackageTags>
-		<PackageLicenseExpression> GFDL-1.3-only</PackageLicenseExpression>
-		<PackageProjectUrl>https://github.com/BitBoxLab-OU/Secure-Storage</PackageProjectUrl>		
+		<PackageProjectUrl>https://www.nuget.org/packages/SecureStorage/</PackageProjectUrl>		
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='rDebug|AnyCPU'">
@@ -61,10 +60,25 @@
 	<ItemGroup>
 		<PackageReference Include="NBitcoin" Version="7.0.11" />
 	</ItemGroup>
+
+	<ItemGroup>
+	  <None Update="LICENSE.md">
+	    <Pack>True</Pack>
+	    <PackagePath>\</PackagePath>
+	  </None>
+	  <None Update="README.md">
+	    <Pack>True</Pack>
+	    <PackagePath>\</PackagePath>
+	  </None>
+	</ItemGroup>
 	
 	<PropertyGroup>
 		<GenerateNuspecDependsOn>$(GenerateNuspecDependsOn);SetPackageVersion</GenerateNuspecDependsOn>
 		<GenerateDocumentationFile>True</GenerateDocumentationFile>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<PackageLicenseFile>LICENSE.md</PackageLicenseFile>
+		<RepositoryType></RepositoryType>
+		<RepositoryUrl>https://github.com/Andrea-Bruno/SecureStorage</RepositoryUrl>
 	</PropertyGroup>
 
 	<Target Name="SetPackageVersion" DependsOnTargets="Build">
