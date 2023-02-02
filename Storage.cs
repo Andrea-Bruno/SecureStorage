@@ -153,14 +153,18 @@ namespace SecureStorage
         // internal static readonly IsolatedStorageFile IsoStore = IsolatedStorageFile.GetStore(IsolatedStorageScope.User | IsolatedStorageScope.Assembly | IsolatedStorageScope.Domain, null, null);
         private static IsolatedStorageFile GetStorage()
         {
+            IsolatedStorageFile storage;
             try
             {
-                return IsolatedStorageFile.GetMachineStoreForApplication();
+                storage = IsolatedStorageFile.GetMachineStoreForApplication();
+                _ = storage.AvailableFreeSpace;
             }
             catch (Exception)
             {
-                return IsolatedStorageFile.GetStore(IsolatedStorageScope.User | IsolatedStorageScope.Assembly | IsolatedStorageScope.Domain, null, null);
+                storage = IsolatedStorageFile.GetStore(IsolatedStorageScope.User | IsolatedStorageScope.Assembly | IsolatedStorageScope.Domain, null, null);
+                _ = storage.AvailableFreeSpace;
             }
+            return storage;
         }
 
         internal bool Initialized;
