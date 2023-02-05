@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Newtonsoft.Json.Linq;
+using System;
+using System.Runtime.ConstrainedExecution;
 
 /// <summary>
 /// <para>The necessity and desire to secure personal information is one thing that everyone shares around the world in the recent times, ranging from businesses to governments to military structures. Data security is critical whether it is being stored, sent, or delivered. Data breaches, hacking, and lost or stolen devices can have catastrophic financial and reputational costs. The need for a Library to protect data generated and handled by applications arose from a desire to protect not only public structures, but also individual citizens, who are even more at risk if their freedom of expression, gender, religion, and any data relating to their person and loved ones is not protected. </para>
@@ -29,6 +31,9 @@ namespace SecureStorage
         {
             _initializer = initializer;
         }
+
+        // ====================== bool ======================
+
         /// <summary>
         /// Permanently save the value of a variable, for possible use after reloading the application
         /// </summary>
@@ -49,10 +54,16 @@ namespace SecureStorage
             var value = _initializer.ObjectStorage.LoadObject(typeof(bool), "v_" + name);
             return (bool?)value ?? defaultValue;
         }
+
+        // ====================== string ======================
+
         /// <inheritdoc cref="Set(string, bool)"/>
         public void Set(string name, string value)
         {
-            _initializer.ObjectStorage.SaveObject(value, "v_" + name);
+            if (value == null)
+                _initializer.ObjectStorage.DeleteObject(typeof(string), "v_" + name);
+            else
+                _initializer.ObjectStorage.SaveObject(value, "v_" + name);
         }
         /// <inheritdoc cref="Get(string, bool)"/>
         public string Get(string name, string defaultValue = default)
@@ -60,17 +71,24 @@ namespace SecureStorage
             var value = _initializer.ObjectStorage.LoadObject(typeof(string), "v_" + name);
             return (string)value ?? defaultValue;
         }
+
+        // ====================== int ======================
+
         ///<inheritdoc cref="Set(string, bool)"/>
         public void Set(string name, int value)
         {
             _initializer.ObjectStorage.SaveObject(value, "v_" + name);
         }
+        
         ///<inheritdoc cref="Set(string, bool)"/>
         public int Get(string name, int defaultValue = default)
         {
             var value = _initializer.ObjectStorage.LoadObject(typeof(int), "v_" + name);
             return (int?)value ?? defaultValue;
         }
+
+        // ====================== unit ======================
+
         ///<inheritdoc cref="Set(string, bool)"/>
         public void Set(string name, uint value)
         {
@@ -82,6 +100,9 @@ namespace SecureStorage
             var value = _initializer.ObjectStorage.LoadObject(typeof(uint), "v_" + name);
             return (uint?)value ?? defaultValue;
         }
+
+        // ====================== long ======================
+
         ///<inheritdoc cref="Set(string, bool)"/>
         public void Set(string name, long value)
         {
@@ -93,6 +114,9 @@ namespace SecureStorage
             var value = _initializer.ObjectStorage.LoadObject(typeof(long), "v_" + name);
             return (long?)value ?? defaultValue;
         }
+
+        // ====================== ulong ======================
+
         ///<inheritdoc cref="Set(string, bool)"/>
         public void Set(string name, ulong value)
         {
@@ -104,10 +128,58 @@ namespace SecureStorage
             var value = _initializer.ObjectStorage.LoadObject(typeof(ulong), "v_" + name);
             return (ulong?)value ?? defaultValue;
         }
+
+        // ====================== short ======================
+
+        ///<inheritdoc cref="Set(string, bool)"/>
+        public void Set(string name, short value)
+        {
+            _initializer.ObjectStorage.SaveObject(value, "v_" + name);
+        }
+        /// <inheritdoc cref="Get(string, bool)"/>
+        public short Get(string name, short defaultValue = default)
+        {
+            var value = _initializer.ObjectStorage.LoadObject(typeof(short), "v_" + name);
+            return (short?)value ?? defaultValue;
+        }
+
+        // ====================== ushort ======================
+
+        ///<inheritdoc cref="Set(string, bool)"/>
+        public void Set(string name, ushort value)
+        {
+            _initializer.ObjectStorage.SaveObject(value, "v_" + name);
+        }
+        /// <inheritdoc cref="Get(string, bool)"/>
+        public ushort Get(string name, ushort defaultValue = default)
+        {
+            var value = _initializer.ObjectStorage.LoadObject(typeof(ushort), "v_" + name);
+            return (ushort?)value ?? defaultValue;
+        }
+
+        // ====================== double ======================
+
+        ///<inheritdoc cref="Set(string, bool)"/>
+        public void Set(string name, double value)
+        {
+            _initializer.ObjectStorage.SaveObject(value, "v_" + name);
+        }
+        /// <inheritdoc cref="Get(string, bool)"/>
+        public double Get(string name, double defaultValue = default)
+        {
+            var value = _initializer.ObjectStorage.LoadObject(typeof(double), "v_" + name);
+            return (double?)value ?? defaultValue;
+        }
+
+        // ====================== DateTime ======================
+
         ///<inheritdoc cref="Set(string, bool)"/>
         public void Set(string name, DateTime value)
         {
-            _initializer.ObjectStorage.SaveObject(value.Ticks, "v_" + name);
+            if (value == null)
+                _initializer.ObjectStorage.DeleteObject(typeof(DateTime), "v_" + name);
+            else
+                _initializer.ObjectStorage.SaveObject(value.Ticks, "v_" + name);
         }
         /// <inheritdoc cref="Get(string, bool)"/>
         public DateTime Get(string name, DateTime defaultValue = default)
@@ -116,6 +188,16 @@ namespace SecureStorage
             return value == null ? defaultValue : new DateTime((long)value);
         }
 
+
+        /// <summary>
+        /// Clear a previously saved value with a key
+        /// </summary>
+        /// <param name="name">Key of value to delete</param>
+        /// <param name="type">Type of value to delete</param>
+        public void Delete(string name, Type type)
+        {
+            _initializer.ObjectStorage.DeleteObject(type, "v_" + name);
+        }
     }
 
 
