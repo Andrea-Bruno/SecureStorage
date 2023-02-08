@@ -104,7 +104,6 @@ namespace SecureStorage
             if (!IsDisposed)
             {
                 IsDisposed = true;
-
             }
             if (Domains.Contains(Domain))
                 Domains.Remove(Domain);
