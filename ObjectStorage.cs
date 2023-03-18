@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.IO.IsolatedStorage;
+using System.Threading;
 using System.Xml.Serialization;
 
 //This library exposes methods for saving objects safely in the protected space
@@ -57,7 +58,7 @@ namespace SecureStorage
                 key = GetKey(obj);
                 if (key == null)
                     key = DefaultKey;
-            } 
+            }
 #if DEBUG
             if (!_secureStorage.Initialized)
                 Debugger.Break(); // The library was not initialized !!
@@ -196,104 +197,107 @@ namespace SecureStorage
             }
             return functionReturnValue;
         }
-
+        const int Attempt = 10;
         private void Serialize(object obj, string key)
         {
-            try
+            lock (Storage.IsoStore)
             {
-                lock (Storage.IsoStore)
+                for (int attempt = 0; attempt < Attempt; attempt++)
                 {
-                    var objFolder = ObjFolder(obj);
-                    var fileName = FileName(objFolder, key);
-                    if (!Storage.IsoStore.DirectoryExists(DirectoryName(objFolder)))
-                        Storage.IsoStore.CreateDirectory(DirectoryName(objFolder));
-#if !DEBUG
-					try
-					{
-#endif
-                    using (var stream = new IsolatedStorageFileStream(fileName, FileMode.Create, FileAccess.Write, Storage.IsoStore))
+                    try
                     {
-                        var serializer = new XmlSerializer(obj.GetType());
-                        if (_secureStorage.Encrypyed)
-                            using (var memoryStream = new MemoryStream())
-                            {
-                                serializer.Serialize(memoryStream, obj);
-                                var bytes = memoryStream.ToArray();
-                                var encryptBytes = Cryptography.Encrypt(bytes, _secureStorage.CryptKey(key));
-                                //#if DEBUG
-                                //								var xml1 = Encoding.ASCII.GetString(bytes);
-                                //								var decript = Cryptography.Decrypt(encryptBytes, _secureStorage.CryptKey(key));
-                                //								var xml2 = Encoding.ASCII.GetString(decript);
-                                //								var checkObj = serializer.Deserialize(new MemoryStream(bytes));
-                                //								if (xml1 != xml2)
-                                //									Debugger.Break();
-                                //#endif
-                                stream.Write(encryptBytes, 0, encryptBytes.Length);
-                            }
-                        else
-                            serializer.Serialize(stream, obj);
+                        var objFolder = ObjFolder(obj);
+                        var fileName = FileName(objFolder, key);
+                        if (!Storage.IsoStore.DirectoryExists(DirectoryName(objFolder)))
+                            Storage.IsoStore.CreateDirectory(DirectoryName(objFolder));
+                        using (var stream = new IsolatedStorageFileStream(fileName, FileMode.Create, FileAccess.Write, Storage.IsoStore))
+                        {
+                            var serializer = new XmlSerializer(obj.GetType());
+                            if (_secureStorage.Encrypyed)
+                                using (var memoryStream = new MemoryStream())
+                                {
+                                    serializer.Serialize(memoryStream, obj);
+                                    var bytes = memoryStream.ToArray();
+                                    var encryptBytes = Cryptography.Encrypt(bytes, _secureStorage.CryptKey(key));
+                                    //#if DEBUG
+                                    //								var xml1 = Encoding.ASCII.GetString(bytes);
+                                    //								var decript = Cryptography.Decrypt(encryptBytes, _secureStorage.CryptKey(key));
+                                    //								var xml2 = Encoding.ASCII.GetString(decript);
+                                    //								var checkObj = serializer.Deserialize(new MemoryStream(bytes));
+                                    //								if (xml1 != xml2)
+                                    //									Debugger.Break();
+                                    //#endif
+                                    stream.Write(encryptBytes, 0, encryptBytes.Length);
+                                }
+                            else
+                                serializer.Serialize(stream, obj);
+                        }
+                        return;
                     }
-#if !DEBUG
-						}
-						catch (Exception ex)
-						{
-							Debug.WriteLine(ex.Message);
-							Debugger.Break();
-						}
-#endif
+                    catch (Exception ex)
+                    {
+                        // if (ex.HResult == -2146233264) // opened by another task
+                        Thread.Sleep(100);
+                        Debugger.Break();
+                        Debug.WriteLine(ex.Message);
+                    }
                 }
-            }
-            catch (Exception ex)
-            {
-                Debugger.Break();
-                Debug.WriteLine(ex.Message);
             }
         }
 
         private object Deserialize(string key, Type type)
         {
-            var objFolder = ObjFolder(type);
-            var fileName = FileName(objFolder, key);
-            if (!Storage.IsoStore.FileExists(fileName)) return null;
-            object obj = null;
-            try
+            lock (Storage.IsoStore)
             {
-                using (Stream stream = new IsolatedStorageFileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Inheritable, Storage.IsoStore))
+
+                var objFolder = ObjFolder(type);
+                var fileName = FileName(objFolder, key);
+                if (!Storage.IsoStore.FileExists(fileName)) return null;
+                for (int attempt = 0; attempt < Attempt; attempt++)
                 {
-                    var serializer = new XmlSerializer(type);
-                    if (_secureStorage.Encrypyed)
-                        using (var memoryStream = new MemoryStream())
+                    try
+                    {
+                        using (Stream stream = new IsolatedStorageFileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Inheritable, Storage.IsoStore))
                         {
-                            stream.CopyTo(memoryStream);
-                            var bytes = memoryStream.ToArray();
-                            try
-                            {
-                                bytes = Cryptography.Decrypt(bytes, _secureStorage.CryptKey(key));
-                            }
-                            catch (Exception)
-                            {
-                                // If it happens here, it means that data is saved with a different decryption key.
-                                // Uninstalling does not remove this data, so it will be deleted!				
-                                stream.Dispose();
-                                Storage.IsoStore.DeleteFile(fileName);
-                                return null;
-                            }
-                            obj = serializer.Deserialize(new MemoryStream(bytes));
+                            var serializer = new XmlSerializer(type);
+                            if (_secureStorage.Encrypyed)
+                                using (var memoryStream = new MemoryStream())
+                                {
+                                    stream.CopyTo(memoryStream);
+                                    var bytes = memoryStream.ToArray();
+                                    try
+                                    {
+                                        bytes = Cryptography.Decrypt(bytes, _secureStorage.CryptKey(key));
+                                    }
+                                    catch (Exception)
+                                    {
+                                        // If it happens here, it means that data is saved with a different decryption key.
+                                        // Uninstalling does not remove this data, so it will be deleted!				
+                                        stream.Dispose();
+                                        Storage.IsoStore.DeleteFile(fileName);
+                                        return null;
+                                    }
+                                    return serializer.Deserialize(new MemoryStream(bytes));
+                                }
+                            else
+                                return serializer.Deserialize(stream);
                         }
-                    else
-                        obj = serializer.Deserialize(stream);
+                        //   stream?.Dispose();
+                    }
+                    catch (Exception ex)
+                    {
+                        // if (ex.HResult == -2146233264) // opened by another task
+                        Thread.Sleep(100);
+                        Debug.WriteLine(ex.InnerException); // Probably some properties of the object class are not serializable. Use [XmlIgnore] to exclude it.
+                        Debugger.Break();
+//#if DEBUG
+
+//                        Storage.IsoStore.DeleteFile(fileName);
+//#endif
+                    }
                 }
-                //   stream?.Dispose();
             }
-            catch (Exception ex)
-            {
-#if DEBUG
-                Debug.WriteLine(ex.InnerException); // Probably some properties of the object class are not serializable. Use [XmlIgnore] to exclude it.
-                Debugger.Break();
-                Storage.IsoStore.DeleteFile(fileName);
-#endif
-            }
-            return obj;
+            return null;
         }
     }
 }
