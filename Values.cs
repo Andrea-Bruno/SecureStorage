@@ -191,7 +191,6 @@ namespace SecureStorage
             return value == null ? defaultValue : new DateTime((long)value);
         }
 
-
         /// <summary>
         /// Clear a previously saved value with a key
         /// </summary>
