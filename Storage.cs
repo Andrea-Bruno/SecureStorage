@@ -21,10 +21,12 @@ namespace SecureStorage
         /// <param name="getSecureKeyValue">Function to get keys safely save in hardware.</param>
         /// <param name="setSecureKeyValue">Secure function provided by the hardware to be able to save keys</param>
         /// <param name="encrypted">Enable encryption (by default it is active and it is recommended not to delete it to keep your data safe)</param>
-        public Storage(string domain, Func<string, string> getSecureKeyValue = null, SetKeyValueSecure setSecureKeyValue = null, bool encrypted = true)
+        public Storage(string domain = default, Func<string, string> getSecureKeyValue = null, SetKeyValueSecure setSecureKeyValue = null, bool encrypted = true)
         {
             Func<string, string> getKeyValue;
             SetKeyValueSecure setKeyValue;
+            if (domain == default)
+                domain = AppDomain.CurrentDomain.FriendlyName;
             Domain = BitConverter.ToUInt64(_hashAlgorithm.ComputeHash(Encoding.Unicode.GetBytes(domain)), 0).ToString("x");
             if (Domains.Contains(Domain))
                 throw new Exception("Storage already instantiated with this domain: " + domain);
