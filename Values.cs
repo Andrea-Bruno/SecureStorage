@@ -1,6 +1,4 @@
-﻿using Newtonsoft.Json.Linq;
-using System;
-using System.Runtime.ConstrainedExecution;
+﻿using System;
 
 namespace SecureStorage
 {
