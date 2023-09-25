@@ -219,14 +219,6 @@ namespace SecureStorage
                                     serializer.Serialize(memoryStream, obj);
                                     var bytes = memoryStream.ToArray();
                                     var encryptBytes = Cryptography.Encrypt(bytes, _secureStorage.CryptKey(key));
-                                    //#if DEBUG
-                                    //								var xml1 = Encoding.ASCII.GetString(bytes);
-                                    //								var decript = Cryptography.Decrypt(encryptBytes, _secureStorage.CryptKey(key));
-                                    //								var xml2 = Encoding.ASCII.GetString(decript);
-                                    //								var checkObj = serializer.Deserialize(new MemoryStream(bytes));
-                                    //								if (xml1 != xml2)
-                                    //									Debugger.Break();
-                                    //#endif
                                     stream.Write(encryptBytes, 0, encryptBytes.Length);
                                 }
                             else
@@ -290,10 +282,7 @@ namespace SecureStorage
                         Thread.Sleep(100);
                         Debug.WriteLine(ex.InnerException); // Probably some properties of the object class are not serializable. Use [XmlIgnore] to exclude it.
                         Debugger.Break();
-//#if DEBUG
-
 //                        Storage.IsoStore.DeleteFile(fileName);
-//#endif
                     }
                 }
             }
