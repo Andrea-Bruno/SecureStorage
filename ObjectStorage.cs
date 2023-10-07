@@ -1,4 +1,5 @@
-﻿using System;
+﻿using NBitcoin;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -160,22 +161,57 @@ namespace SecureStorage
         /// <param name="key"> The key that was used to save the object</param>
         public void DeleteObject(Type type, string key)
         {
-            var objFolder = ObjFolder(type);
-            if (Storage.IsoStore.FileExists(FileName(objFolder, key)))
-                Storage.IsoStore.DeleteFile(FileName(objFolder, key));
+            lock (this)
+            {
+                for (int attempt = 0; attempt < Attempt; attempt++)
+                {
+                    try
+                    {
+                        var objFolder = ObjFolder(type);
+                        if (Storage.IsoStore.FileExists(FileName(objFolder, key)))
+                            Storage.IsoStore.DeleteFile(FileName(objFolder, key));
+
+                        return;
+                    }
+                    catch (Exception ex)
+                    {
+                        Thread.Sleep(100);
+                        Debugger.Break();
+                        Debug.WriteLine(ex.Message);
+                    }
+
+                }
+            }
         }
+
         /// <summary>
         /// Delete all the object of certain type
         /// </summary>
         /// <param name="type">The type of the object</param>
         public void DeleteAllObject(Type type)
         {
-            var keys = GetAllKey(type);
-            foreach (var key in keys)
+            lock (this)
             {
-                var objFolder = ObjFolder(type);
-                if (Storage.IsoStore.FileExists(FileName(objFolder, key)))
-                    Storage.IsoStore.DeleteFile(FileName(objFolder, key));
+                for (int attempt = 0; attempt < Attempt; attempt++)
+                {
+                    try
+                    {
+                        var keys = GetAllKey(type);
+                        foreach (var key in keys)
+                        {
+                            var objFolder = ObjFolder(type);
+                            if (Storage.IsoStore.FileExists(FileName(objFolder, key)))
+                                Storage.IsoStore.DeleteFile(FileName(objFolder, key));
+                        }
+                        return;
+                    }
+                    catch (Exception ex)
+                    {
+                        Thread.Sleep(100);
+                        Debugger.Break();
+                        Debug.WriteLine(ex.Message);
+                    }
+                }
             }
         }
 
@@ -228,7 +264,6 @@ namespace SecureStorage
                     }
                     catch (Exception ex)
                     {
-                        // if (ex.HResult == -2146233264) // opened by another task
                         Thread.Sleep(100);
                         Debugger.Break();
                         Debug.WriteLine(ex.Message);
