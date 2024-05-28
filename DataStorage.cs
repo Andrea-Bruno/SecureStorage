@@ -31,7 +31,7 @@ namespace SecureStorage
         /// <param name="key">Key used to save the Data.</param>
         public void SaveData(byte[] data, string key)
         {
-            if (SecureStorage.Encrypyed)
+            if (SecureStorage.Encrypted)
                 data = Cryptography.Encrypt(data, SecureStorage.CryptKey(key));
             using (var file = Storage.IsoStore.OpenFile(FileName(key), FileMode.Create))
             {
@@ -59,7 +59,7 @@ namespace SecureStorage
                 // data = new byte[file.Length];
                 // file.Read(data, 0, (int)file.Length);
             }
-            if (SecureStorage.Encrypyed)
+            if (SecureStorage.Encrypted)
                 data = Cryptography.Decrypt(data, SecureStorage.CryptKey(key));
             return data;
         }
@@ -83,7 +83,7 @@ namespace SecureStorage
                                        FileAccess.Write, Storage.IsoStore))
                             {
                                 var formatter = new BinaryFormatter();
-                                if (SecureStorage.Encrypyed)
+                                if (SecureStorage.Encrypted)
                                     using (var memoryStream = new MemoryStream())
                                     {
                                         formatter.Serialize(memoryStream, obj);
@@ -125,7 +125,7 @@ namespace SecureStorage
                 try
                 {
                     var formatter = new BinaryFormatter();
-                    if (SecureStorage.Encrypyed)
+                    if (SecureStorage.Encrypted)
                         using (var memoryStream = new MemoryStream())
                         {
                             stream.CopyTo(memoryStream);

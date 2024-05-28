@@ -37,7 +37,7 @@ namespace SecureStorage
             void UseInternalAlgorithms()
             {
                 var hash = _hashAlgorithm.ComputeHash(Encoding.Unicode.GetBytes(Domain + Environment.MachineName + Environment.UserName));
-                DefaultEncrypter = new Key(hash);
+                DefaultEncrypted = new Key(hash);
                 setKeyValue = (key, value) => SetKeyValue_Default(Domain + "." + key, value);
                 getKeyValue = key => GetKeyValue_Default(Domain + "." + key);
             }
@@ -67,7 +67,7 @@ namespace SecureStorage
                 Debugger.Break();
             }
 
-            Encrypyed = encrypted;
+            Encrypted = encrypted;
             var h5 = new byte[5];
             Array.Copy(_hashAlgorithm.ComputeHash(Encoding.UTF8.GetBytes(Environment.MachineName)), h5, h5.Length);
             var keyName = BitConverter.ToString(h5).Replace("-", "");
@@ -113,7 +113,7 @@ namespace SecureStorage
 
         private static readonly HashSet<string> Domains = new HashSet<string>();
         /// <summary>
-        /// Delete all the directory with all the content in it.
+        /// Destroy all data contained in the storage.
         /// </summary>
         public void Destroy()
         {
@@ -188,7 +188,7 @@ namespace SecureStorage
         /// Functionality to save values
         /// </summary>
         public readonly Values Values;
-        internal readonly bool Encrypyed;
+        internal readonly bool Encrypted;
         internal readonly string Domain;
 
         /// <summary>
@@ -219,7 +219,7 @@ namespace SecureStorage
             return cryptKey;
         }
 
-        private Key DefaultEncrypter;
+        private Key DefaultEncrypted;
         /// <summary>
         /// Secure function provided by the hardware to be able to save keys
         /// </summary>
@@ -238,7 +238,7 @@ namespace SecureStorage
                 }
                 var fileStream = IsoStore.OpenFile(Path.Combine(".", filename), FileMode.Create);
                 var buffer = Encoding.Unicode.GetBytes(value);
-                var encrypted = DefaultEncrypter.PubKey.Encrypt(buffer);
+                var encrypted = DefaultEncrypted.PubKey.Encrypt(buffer);
                 fileStream.Write(encrypted, 0, encrypted.Length);
                 fileStream.Close();
             }
@@ -265,7 +265,7 @@ namespace SecureStorage
                     // fileStream.Read(buffer, 0, buffer.Length);
                     fileStream.Close();
 
-                    var decrypted = DefaultEncrypter.Decrypt(buffer);
+                    var decrypted = DefaultEncrypted.Decrypt(buffer);
                     return Encoding.Unicode.GetString(decrypted);
                 }
             }

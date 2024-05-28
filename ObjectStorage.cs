@@ -23,7 +23,7 @@ namespace SecureStorage
         public ObjectStorage(Storage secureStorage) => _secureStorage = secureStorage;
         private readonly Storage _secureStorage;
 
-        private string ObjExtension() => _secureStorage.Encrypyed ? ".cry" : ".xml";
+        private string ObjExtension() => _secureStorage.Encrypted ? ".cry" : ".xml";
         private const string CharNotAllowed = "*?/\\|<>'\"";
         private static string ObjFolder(object obj)
         {
@@ -249,7 +249,7 @@ namespace SecureStorage
                         using (var stream = new IsolatedStorageFileStream(fileName, FileMode.Create, FileAccess.Write, Storage.IsoStore))
                         {
                             var serializer = new XmlSerializer(obj.GetType());
-                            if (_secureStorage.Encrypyed)
+                            if (_secureStorage.Encrypted)
                                 using (var memoryStream = new MemoryStream())
                                 {
                                     serializer.Serialize(memoryStream, obj);
@@ -287,7 +287,7 @@ namespace SecureStorage
                         using (Stream stream = new IsolatedStorageFileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Inheritable, Storage.IsoStore))
                         {
                             var serializer = new XmlSerializer(type);
-                            if (_secureStorage.Encrypyed)
+                            if (_secureStorage.Encrypted)
                                 using (var memoryStream = new MemoryStream())
                                 {
                                     stream.CopyTo(memoryStream);
