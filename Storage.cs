@@ -112,14 +112,19 @@ namespace SecureStorage
         }
 
         private static readonly HashSet<string> Domains = new HashSet<string>();
+
         /// <summary>
         /// Destroy all data contained in the storage.
         /// </summary>
-        public void Destroy()
+        /// <param name="dispose">If true, After this action the secure storage object can no longer be used</param>
+        /// <returns>Outcome of the operation</returns>
+        public void Destroy(bool dispose = true)
         {
             try
             {
                 DeleteDirectoryRecursively(IsoStore, Domain);
+                if (dispose)
+                    Dispose();
             }
             catch (Exception ex)
             {
@@ -147,6 +152,7 @@ namespace SecureStorage
             }
             storageFile.DeleteDirectory(dirName);
         }
+
         /// <summary>
         /// The location of the secure storage
         /// </summary>
