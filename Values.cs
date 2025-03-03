@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 
 namespace SecureStorage
 {
@@ -73,6 +74,24 @@ namespace SecureStorage
             return (string)value ?? defaultValue;
         }
 
+
+        // ====================== Bytes ======================
+
+        /// <inheritdoc cref="Set(string, bool)"/>
+        public void SetBytes(string name, byte[] value)
+        {
+            if (value == null || value.Length == 0)
+                _initializer.ObjectStorage.DeleteObject(typeof(string), "v_" + name);
+            else
+                Set(name, Convert.ToBase64String(value));
+        }
+        /// <inheritdoc cref="Get(string, bool)"/>
+        public byte[] GetBytes(string name, byte[] defaultValue = default)
+        {
+            var value = (string)_initializer.ObjectStorage.LoadObject(typeof(string), "v_" + name);
+            return string.IsNullOrEmpty(value) ? defaultValue : Convert.FromBase64String(value);
+        }
+
         // ====================== int ======================
 
         ///<inheritdoc cref="Set(string, bool)"/>
@@ -80,7 +99,7 @@ namespace SecureStorage
         {
             _initializer.ObjectStorage.SaveObject(value, "v_" + name);
         }
-        
+
         ///<inheritdoc cref="Set(string, bool)"/>
         public int Get(string name, int defaultValue = default)
         {
