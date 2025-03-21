@@ -4,6 +4,7 @@ using System.IO;
 using System.IO.IsolatedStorage;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace SecureStorage
 {
@@ -73,7 +74,7 @@ namespace SecureStorage
         {
             try
             {
-                new Thread(() =>
+                new Task(() =>
                 {
                     lock (Storage.IsoStore)
                     {
