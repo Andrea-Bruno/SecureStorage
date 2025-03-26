@@ -245,20 +245,18 @@ namespace SecureStorage
                         var fileName = FileName(objFolder, key);
                         if (!Storage.IsoStore.DirectoryExists(DirectoryName(objFolder)))
                             Storage.IsoStore.CreateDirectory(DirectoryName(objFolder));
-                        using (var stream = new IsolatedStorageFileStream(fileName, FileMode.Create, FileAccess.Write, Storage.IsoStore))
-                        {
-                            var serializer = new XmlSerializer(obj.GetType());
-                            if (_secureStorage.Encrypted)
-                                using (var memoryStream = new MemoryStream())
-                                {
-                                    serializer.Serialize(memoryStream, obj);
-                                    var bytes = memoryStream.ToArray();
-                                    var encryptBytes = Cryptography.Encrypt(bytes, _secureStorage.CryptKey(key));
-                                    stream.Write(encryptBytes, 0, encryptBytes.Length);
-                                }
-                            else
-                                serializer.Serialize(stream, obj);
-                        }
+                        using var stream = new IsolatedStorageFileStream(fileName, FileMode.Create, FileAccess.Write, Storage.IsoStore);
+                        var serializer = new XmlSerializer(obj.GetType());
+                        if (_secureStorage.Encrypted)
+                            using (var memoryStream = new MemoryStream())
+                            {
+                                serializer.Serialize(memoryStream, obj);
+                                var bytes = memoryStream.ToArray();
+                                var encryptBytes = Cryptography.Encrypt(bytes, _secureStorage.CryptKey(key));
+                                stream.Write(encryptBytes, 0, encryptBytes.Length);
+                            }
+                        else
+                            serializer.Serialize(stream, obj);
                         return;
                     }
                     catch (Exception ex)
@@ -283,31 +281,29 @@ namespace SecureStorage
                 {
                     try
                     {
-                        using (Stream stream = new IsolatedStorageFileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Inheritable, Storage.IsoStore))
-                        {
-                            var serializer = new XmlSerializer(type);
-                            if (_secureStorage.Encrypted)
-                                using (var memoryStream = new MemoryStream())
+                        using Stream stream = new IsolatedStorageFileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Inheritable, Storage.IsoStore);
+                        var serializer = new XmlSerializer(type); // System.IO.FileNotFoundException
+                        if (_secureStorage.Encrypted)
+                            using (var memoryStream = new MemoryStream())
+                            {
+                                stream.CopyTo(memoryStream);
+                                var bytes = memoryStream.ToArray();
+                                try
                                 {
-                                    stream.CopyTo(memoryStream);
-                                    var bytes = memoryStream.ToArray();
-                                    try
-                                    {
-                                        bytes = Cryptography.Decrypt(bytes, _secureStorage.CryptKey(key));
-                                    }
-                                    catch (Exception)
-                                    {
-                                        // If it happens here, it means that data is saved with a different decryption key.
-                                        // Uninstalling does not remove this data, so it will be deleted!				
-                                        stream.Dispose();
-                                        Storage.IsoStore.DeleteFile(fileName);
-                                        return null;
-                                    }
-                                    return serializer.Deserialize(new MemoryStream(bytes));
+                                    bytes = Cryptography.Decrypt(bytes, _secureStorage.CryptKey(key));
                                 }
-                            else
-                                return serializer.Deserialize(stream);
-                        }
+                                catch (Exception)
+                                {
+                                    // If it happens here, it means that data is saved with a different decryption key.
+                                    // Uninstalling does not remove this data, so it will be deleted!				
+                                    stream.Dispose();
+                                    Storage.IsoStore.DeleteFile(fileName);
+                                    return null;
+                                }
+                                return serializer.Deserialize(new MemoryStream(bytes));
+                            }
+                        else
+                            return serializer.Deserialize(stream);
                         //   stream?.Dispose();
                     }
                     catch (Exception ex)
@@ -316,7 +312,8 @@ namespace SecureStorage
                         Thread.Sleep(100);
                         Debug.WriteLine(ex.InnerException); // Probably some properties of the object class are not serializable. Use [XmlIgnore] to exclude it.
                         Debugger.Break();
-//                        Storage.IsoStore.DeleteFile(fileName);
+                        if (attempt == Attempt - 1)
+                            Storage.IsoStore.DeleteFile(fileName);
                     }
                 }
             }

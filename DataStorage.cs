@@ -34,10 +34,8 @@ namespace SecureStorage
         {
             if (SecureStorage.Encrypted)
                 data = Cryptography.Encrypt(data, SecureStorage.CryptKey(key));
-            using (var file = Storage.IsoStore.OpenFile(FileName(key), FileMode.Create))
-            {
-                file.Write(data, 0, data.Length);
-            }
+            using var file = Storage.IsoStore.OpenFile(FileName(key), FileMode.Create);
+            file.Write(data, 0, data.Length);
         }
 
         /// <summary>
@@ -53,10 +51,8 @@ namespace SecureStorage
             byte[] data;
             using (var file = Storage.IsoStore.OpenFile(fileName, FileMode.Open))
             {
-                using (var reader = new BinaryReader(file))
-                {
-                   data = reader.ReadBytes((int)file.Length);
-                }
+                using var reader = new BinaryReader(file);
+                data = reader.ReadBytes((int)file.Length);
                 // data = new byte[file.Length];
                 // file.Read(data, 0, (int)file.Length);
             }
@@ -80,21 +76,19 @@ namespace SecureStorage
                     {
                         try
                         {
-                            using (var stream = new IsolatedStorageFileStream(FileName(key), FileMode.Create,
-                                       FileAccess.Write, Storage.IsoStore))
-                            {
-                                var formatter = new BinaryFormatter();
-                                if (SecureStorage.Encrypted)
-                                    using (var memoryStream = new MemoryStream())
-                                    {
-                                        formatter.Serialize(memoryStream, obj);
-                                        var bytes = memoryStream.ToArray();
-                                        bytes = Cryptography.Encrypt(bytes, SecureStorage.CryptKey(key));
-                                        stream.Write(bytes, 0, bytes.Length);
-                                    }
-                                else
-                                    formatter.Serialize(stream, obj);
-                            }
+                            using var stream = new IsolatedStorageFileStream(FileName(key), FileMode.Create,
+                                       FileAccess.Write, Storage.IsoStore);
+                            var formatter = new BinaryFormatter();
+                            if (SecureStorage.Encrypted)
+                                using (var memoryStream = new MemoryStream())
+                                {
+                                    formatter.Serialize(memoryStream, obj);
+                                    var bytes = memoryStream.ToArray();
+                                    bytes = Cryptography.Encrypt(bytes, SecureStorage.CryptKey(key));
+                                    stream.Write(bytes, 0, bytes.Length);
+                                }
+                            else
+                                formatter.Serialize(stream, obj);
                         }
                         catch (Exception ex)
                         {
