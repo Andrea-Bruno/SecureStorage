@@ -27,7 +27,7 @@ namespace SecureStorage
             SetKeyValueSecure setKeyValue;
             if (domain == default)
                 domain = AppDomain.CurrentDomain.FriendlyName;
-            Domain = BitConverter.ToUInt64(_hashAlgorithm.ComputeHash(Encoding.Unicode.GetBytes(domain)), 0).ToString("x");
+            Domain = BitConverter.ToUInt64(_hashAlgorithm.ComputeHash(Encoding.Unicode.GetBytes(domain)), 0).ToString("x16");
             if (Domains.Contains(Domain))
                 throw new Exception("Storage already instantiated with this domain: " + domain);
             Domains.Add(Domain);
